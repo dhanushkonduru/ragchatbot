@@ -3,6 +3,8 @@ sentence-transformers
 qdrant-client
 pymongo
 langchain
+langchain-community
+langchain-text-splitters
 llama_index
 streamlit
 python-dotenv
