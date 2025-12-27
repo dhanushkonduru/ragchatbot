@@ -1,4 +1,4 @@
-# AskMyPDF
+# RAGChat
 
 ## 🧠 Chat with Your PDFs & Websites – RAG-Powered Multi-Source Q&A Bot
 This project is a Retrieval-Augmented Generation (RAG) chatbot that allows users to upload multiple PDFs **or crawl websites** and ask natural language questions about their content. It combines semantic vector search with large language models (LLMs) to deliver accurate, context-rich answers.

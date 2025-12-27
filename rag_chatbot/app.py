@@ -35,7 +35,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 url_cache = URLCache(cache_dir='.cache', ttl_hours=24)
 
 st.set_page_config(
-    page_title="📚 AskMyPDF Pro - PDF & Web Q&A Chatbot",
+    page_title="📚 RAGChat - PDF & Web Q&A Chatbot",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -300,7 +300,7 @@ col1, col2 = st.columns([4, 1], gap="small")
 with col1:
     st.markdown("""
     <div style="padding: 0.5rem 0;">
-        <h1 style="margin-bottom: 0.25rem; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📚 AskMyPDF Pro</h1>
+        <h1 style="margin-bottom: 0.25rem; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📚 RAGChat</h1>
         <p style="color: #94a3b8; font-size: 14px; margin-top: 0;">💬 Upload PDFs or crawl websites, then ask questions</p>
     </div>
     """, unsafe_allow_html=True)
@@ -544,7 +544,7 @@ with st.sidebar:
     st.markdown("### 💾 Export")
     if st.session_state.chat_history:
         def generate_markdown_export():
-            md = f"""# AskMyPDF Chat Export
+            md = f"""# RAGChat Chat Export
 **Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 **Documents:** {len(st.session_state.documents)}
 **Messages:** {len(st.session_state.chat_history)}
@@ -569,7 +569,7 @@ with st.sidebar:
         st.download_button(
             "📥 Download as Markdown",
             export_md,
-            f"askmypdf_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            f"ragchat_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
             "text/markdown",
             use_container_width=True
         )
@@ -583,7 +583,7 @@ with st.sidebar:
         st.download_button(
             "📊 Download as JSON",
             json_export,
-            f"askmypdf_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+            f"ragchat_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             "application/json",
             use_container_width=True
         )

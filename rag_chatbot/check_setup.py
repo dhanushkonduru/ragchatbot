@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick setup verification script for AskMyPDF
+Quick setup verification script for RAGChat
 Checks if all required dependencies and configurations are in place.
 """
 import os
@@ -87,7 +87,7 @@ def check_qdrant_connection():
         return False
 
 def main():
-    print("🚀 AskMyPDF Setup Verification\n")
+    print("🚀 RAGChat Setup Verification\n")
     print("=" * 50)
     
     deps_ok = check_dependencies()
