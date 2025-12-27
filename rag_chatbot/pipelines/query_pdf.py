@@ -6,7 +6,7 @@ from utils.model_cache import get_embedding_model
 
 EMBED_DIM = 384
 
-def ask_pdf(question: str, collections: list, top_k=6) -> str:
+def ask_pdf(question: str, collections: list, top_k=6, return_chunks=False):
     if not collections:
         raise ValueError("No collections provided for querying")
     
@@ -34,21 +34,62 @@ def ask_pdf(question: str, collections: list, top_k=6) -> str:
                 raise RuntimeError(f"Error querying collection '{collection}': {str(e)}") from e
 
         if not all_hits:
-            return "I couldn't find any relevant information in the selected PDFs to answer your question. Please try rephrasing your question or selecting different PDFs."
+            return "I cannot find this information in the uploaded documents or websites."
 
         # Sort by score and pick top overall
         sorted_hits = sorted(all_hits, key=lambda h: h.score, reverse=True)[:top_k]
 
-        context = "\n---\n".join([f"[{h.payload.get('source', '')}] {h.payload.get('text', '')}" for h in sorted_hits])
+        # Format context with source information
+        context_parts = []
+        sources_used = set()
+        
+        for h in sorted_hits:
+            payload = h.payload
+            source_type = payload.get('source_type', 'pdf')
+            
+            # Determine source title/name
+            if source_type == 'website':
+                source_title = payload.get('page_title', payload.get('source_url', 'Website'))
+                source_url = payload.get('source_url', '')
+                source_info = f"[Source: {source_title}]"
+                sources_used.add((source_title, source_url, 'website'))
+            else:
+                source_name = payload.get('source', 'PDF')
+                source_info = f"[Source: {source_name}]"
+                sources_used.add((source_name, None, 'pdf'))
+            
+            text = payload.get('text', '')
+            context_parts.append(f"{source_info} {text}")
+        
+        context = "\n---\n".join(context_parts)
+        
+        # Format sources list for citation
+        sources_list = []
+        for name, url, stype in sources_used:
+            if url:
+                sources_list.append(f"- {name} ({url})")
+            else:
+                sources_list.append(f"- {name}")
 
-        prompt = f"""You are an intelligent PDF assistant. Answer the following question using the information provided below.
+        prompt = f"""You are a RAG-powered assistant answering questions from PDFs and websites.
 
-Question: {question}
+STRICT RULES:
+1. Answer ONLY using the provided CONTEXT below
+2. If the answer isn't in CONTEXT, respond: "I cannot find this information in the uploaded documents or websites."
+3. Never use external knowledge or make assumptions
+4. Always cite sources with format: [Source: {{title}}]
 
-Relevant excerpts from the PDFs:
+RESPONSE FORMAT:
+- Start with direct answer (2-3 sentences)
+- Add brief explanation if needed
+- End with "Sources:" and list each unique source used
+
+CONTEXT:
 {context}
 
-Provide a clear, complete and well-explained answer based on the information above. If multiple points are relevant, summarize them all. If the information doesn't directly answer the question, say so."""
+USER QUESTION: {question}
+
+Answer:"""
         
         groq = get_groq_client()
         # Use environment variable for model, with fallback to current available models
@@ -102,6 +143,29 @@ Provide a clear, complete and well-explained answer based on the information abo
                 # Re-raise if it's a different error or we've exhausted fallbacks
                 raise
 
-        return resp.choices[0].message.content
+        answer = resp.choices[0].message.content
+        
+        # Ensure sources are mentioned if not already in answer
+        if sources_list and "Sources:" not in answer:
+            answer += f"\n\n**Sources:**\n" + "\n".join(sources_list)
+        
+        if return_chunks:
+            # Format chunks for debug display
+            chunks_data = []
+            for idx, h in enumerate(sorted_hits):
+                payload = h.payload
+                chunk_data = {
+                    'text': payload.get('text', ''),
+                    'score': h.score,
+                    'chunk_index': idx + 1,
+                    'source_name': payload.get('page_title') or payload.get('source', 'Unknown'),
+                    'source_url': payload.get('source_url', ''),
+                    'timestamp': payload.get('crawl_date', 'N/A')
+                }
+                chunks_data.append(chunk_data)
+            
+            return answer, chunks_data
+        
+        return answer
     except Exception as e:
         raise RuntimeError(f"Error processing query: {str(e)}") from e
